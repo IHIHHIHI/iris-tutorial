@@ -133,8 +133,21 @@ Lemma inc_spec a l :
     inc #a #(length l)
   {{{RET #(); a ↦∗ ((λ i : Z, #(i + 1)) <$> l)}}}.
 Proof.
-  (* exercise *)
-Admitted.
+  intros. iIntros "Ha HΦ".
+  iLöb as "IH" forall (a l). 
+  wp_rec. wp_pures. 
+  destruct l.
+  {
+    wp_pures. iModIntro. by iApply "HΦ". 
+  }
+  {
+    wp_pures. rewrite array_cons. iDestruct "Ha" as "[Ha Hl]".
+    wp_load. wp_pures. wp_store. wp_pures.
+    rewrite Nat2Z.inj_succ Z.sub_1_r Z.pred_succ.
+    wp_apply ("IH" with "Hl"). 
+    iIntros "Hl". iApply "HΦ". rewrite array_cons. iFrame. 
+  }
+Qed.
 
 (* ================================================================= *)
 (** ** Reverse *)
@@ -165,7 +178,65 @@ Lemma reverse_spec a l :
     reverse #a #(length l)
   {{{RET #(); a ↦∗ rev l}}}.
 Proof.
-  (* exercise *)
-Admitted.
-
+  intros. iIntros "Hl HΦ". 
+  iLöb as "IH" forall (a l).
+  wp_rec. wp_pures. destruct l. 
+  {
+    wp_pures. iApply "HΦ". simpl. iApply "Hl".
+  }
+  {
+    simpl. destruct (rev l) eqn:Eqrev.
+    {
+      Search (rev).
+      replace ([]) with (@rev val []) in Eqrev by reflexivity.
+      apply rev_inj in Eqrev. subst. simpl. wp_pures. 
+      iApply "HΦ". iApply "Hl".
+    }
+    {
+      assert (H: l = rev l0 ++ [v0]).
+      {
+        assert(H: rev (rev l) = rev (v0 :: l0)).
+        {
+          rewrite Eqrev. reflexivity.
+        }
+        rewrite rev_involutive in H. 
+        rewrite H. simpl. reflexivity.
+      }
+      clear Eqrev. subst. simpl. 
+      assert (Hl : length (rev l0 ++ [v0]) >= 1).
+      {
+        rewrite length_app. simpl. lia.
+      }
+      assert(H : bool_decide (S (length (rev l0 ++ [v0])) ≤ 1)%Z = false).
+      {
+        apply bool_decide_eq_false. nia.
+      }
+      rewrite H. wp_pures. rewrite array_cons. iDestruct "Hl" as "[Ha Hl]".
+      wp_load. wp_pures. 
+      (* Search (array _). *)
+      rewrite array_app. iDestruct "Hl" as "[Hl Hv0]".
+      replace ((S (length (rev l0 ++ [v0])) - 1)%Z) with (Z.of_nat (length (rev l0 ++ [v0])))
+      by lia.
+      replace (Z.of_nat (length (rev l0 ++ [v0]))) with 
+      (Z.of_nat (1 + length(rev l0))).
+      2: rewrite length_app;simpl;nia.
+      simpl. rewrite array_cons. iDestruct "Hv0" as "[Hv0 Hnil]".
+      rewrite Loc.add_assoc. 
+      (* Check (1 + length (rev l0))%Z. *)
+      replace ((1 + length (rev l0)))%Z with (Z.of_nat(S (length (rev l0)))) by lia.
+      wp_load. wp_store. wp_store. wp_pures. 
+      replace (S (length (rev l0 ++ [v0])) - 2)%Z with (Z.of_nat (length (rev l0))).
+      2: rewrite length_app;simpl;nia.
+      wp_apply ("IH" with "Hl"). iIntros "Hl0".
+      iApply "HΦ". rewrite rev_involutive. 
+      (* Search (array _). *)
+      rewrite array_cons. rewrite array_app. iFrame.
+      rewrite !Loc.add_assoc. 
+      replace (Z.of_nat (S (length (rev l0)))) with (1 + length (rev l0))%Z by lia.
+      rewrite length_rev. 
+      iFrame. 
+      rewrite Loc.add_assoc. iFrame.
+    }
+  }
+Qed.
 End proofs.
