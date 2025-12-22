@@ -359,8 +359,18 @@ Proof.
     }
     (** ... and finish the proof of the forked thread. *)
     done.
-  - (* exercise *)
-Admitted.
+  - 
+    wp_pures.
+    iInv "Hinv" as "(%v & Hl & Hv)".
+    wp_load. 
+    iDestruct "Hv" as "[%Hv | %Hv]";subst;iFrame.
+    + iSplitR.
+      * by iLeft.
+      * iApply "HΦ". by iLeft.
+    + iSplitR.
+      * by iRight.
+      * iApply "HΦ". by iRight. 
+Qed.
 
 End proofs.
 
