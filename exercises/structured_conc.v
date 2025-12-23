@@ -219,7 +219,7 @@ Proof.
     iFrame.
     by iLeft.
   }
-  wp_apply (wp_fork with "[Hf HP]").
+  wp_apply (wp_fork with "[HP]").
   - iNext.
     wp_apply ("Hf" with "HP").
     iIntros "%v HΨ".
@@ -452,7 +452,34 @@ Proof.
       by apply Zeven_plus_Zeven.
     }
     by iApply "HΦ'".
-  (* exercise *)
-Admitted.
+  - iIntros (Φ').
+    iModIntro.
+    iIntros "_ HΦ'".
+    iInv "I" as "(%n & Hr & >%Hn)".
+    wp_faa.
+    iModIntro.
+    iFrame.
+    iSplitR.
+    {
+      iNext.
+      iPureIntro.
+      by apply Zeven_plus_Zeven.
+    }
+    by iApply "HΦ'".
+  - by iFrame.
+  - iIntros (v1 v2) "_".
+    wp_pures. 
+    iInv "I" as "(%n &Hr & >%Hn)".
+    wp_load.
+    iModIntro.
+    iFrame.
+    iSplitR.
+    {  
+      iNext.
+      by iPureIntro.
+    }
+    by iApply "HΦ".
+Qed. 
+
 
 End parallel_add.
